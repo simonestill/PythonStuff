@@ -1,0 +1,239 @@
+"""
+Clone of 2048 game.
+"""
+
+import poc_2048_gui
+import random
+
+# Directions, DO NOT MODIFY
+UP = 1
+DOWN = 2
+LEFT = 3
+RIGHT = 4
+
+# Offsets for computing tile indices in each direction.
+# DO NOT MODIFY this dictionary.    
+OFFSETS = {UP: (1, 0), 
+           DOWN: (-1, 0), 
+           LEFT: (0, 1), 
+           RIGHT: (0, -1)} 
+   
+def merge(line):
+    """
+        merges line e.g. [0,2,2,4] becomes [4,4,0,0]		
+    """
+    len_minus_1 = len(line)-1
+    for idx in range(len_minus_1):
+        if line[idx] == 0:
+            idx2 = idx
+            while line[idx2] == 0  and idx2 < len_minus_1:
+                idx2+=1
+            line[idx] = line[idx2]
+            line[idx2] = 0
+
+    for idx in range(len_minus_1):
+        if line[idx] == line[idx+1]:
+            line[idx] += line[idx+1]
+            line[idx+1] = 0
+
+    for idx in range(len_minus_1):
+        if line[idx] == 0:
+            idx2 = idx
+            while line[idx2] == 0  and idx2 < len_minus_1:
+                idx2+=1
+            line[idx] = line[idx2]
+            line[idx2] = 0
+
+    return line
+    
+class TwentyFortyEight:
+    """
+    Class to run the game logic.
+    """
+
+    def __init__(self, grid_height, grid_width):
+        # replace with your code
+        self.grid_height = grid_height
+        self.grid_width  = grid_width
+        self.grid = []
+        self.grid_direction = UP
+        self.indices = {}
+        
+        up = []
+        down = []
+        left = []
+        right = []
+        for idx in range(grid_height):
+            up.append((0,idx))
+            down.append((0,grid_height-1-idx))
+            
+            
+        self.won = False
+        self.lost =  False
+        for idx in range(grid_width):
+            left.append((idx,0))
+            right.append((grid_width-1 - idx,0))
+                         
+        self.indices = {UP:up,DOWN:down,LEFT:left,RIGHT:right}
+            
+        self.reset()
+        
+    
+    def reset(self):
+        """
+        Reset the game so the grid is empty.
+        """
+        # replace with your code
+        self.grid = []
+        for idx in range(self.grid_height):
+            self.grid.append([0]*self.grid_width)
+            
+    
+    def __str__(self):
+        """
+        Return a string representation of the grid for debugging.
+        """
+        # replace with your code
+        return str(self.grid)
+
+    def get_grid_height(self):
+        """
+        Get the height of the board.
+        """
+        # replace with your code
+        return self.grid_height
+    
+    def get_grid_width(self):
+        """
+        Get the width of the board.
+        """
+        # replace with your code
+        return self.grid_width
+                            
+    def move(self, direction):
+        """
+        Move all tiles in the given direction and add
+        a new tile if any tiles moved.
+        """
+        # replace with your code
+        
+        init_index = self.indices[direction]
+        index = []
+        for idx in init_index:
+            index.append(list(idx))
+        
+        if direction == UP:
+            start = 0
+            end  = self.grid_width
+            increment = 1
+        elif direction == DOWN:
+            start = self.grid_width- 1
+            end  = - 1
+            increment = -1
+        elif direction == LEFT:
+            start = self.grid_height-1
+            end  = - 1
+            increment = -1
+        elif direction == RIGHT:
+            start = 0
+            end  = self.grid_height
+            increment = 1
+        else:
+            return self.grid_direction
+            
+        
+        for z in range(start,end,increment):
+            #print index
+            line = []
+            for idx in index:
+                line.append(self.grid[idx[1]][idx[0]])
+            #print(line)
+            line2 = merge(line)
+            #print(line2)
+            for idx,coords in enumerate(index):
+                self.grid[coords[1]][coords[0]] = line2[idx]           
+            
+            for idx in index:
+                idx[0] += OFFSETS[direction][0]
+                idx[1] += OFFSETS[direction][1]
+                #print index            
+        self.has_won()
+        self.new_tile()        
+        return self.grid_direction
+        
+    def new_tile(self):
+        """
+        Create a new tile in a randomly selected empty 
+        square.  The tile should be 2 90% of the time and
+        4 10% of the time.
+        """
+        # replace with your code
+        if self.is_full() == True:
+            return
+        
+        filled = False
+
+        while filled == False:
+            x_pos = random.randrange(self.grid_width)
+            y_pos = random.randrange(self.grid_height)       
+            
+            if self.grid[y_pos][x_pos] == 0:
+                number = 2
+                rand_int = random.randrange(10)
+                if  rand_int > 8:
+                    number = 4
+                self.grid[y_pos][x_pos] = number
+                filled = True
+        
+    def set_tile(self, row, col, value):
+        """
+        Set the tile at position row, col to have the given value.
+        """        
+        # replace with your code
+        self.grid[col][row] = value
+
+    def get_tile(self, row, col):
+        """
+        Return the value of the tile at position row, col.
+        """        
+        # replace with your code
+        return self.grid[row][col]
+    
+   
+    def has_won(self):
+        """
+        Check if grid contains 2048
+        """
+        for idx in range(self.grid_height):
+            for idx2 in range(self.grid_width):
+                if self.grid[idx][idx2] == 2048:
+                    print("You've won")
+                    return True
+        return False
+    
+    
+    def has_lost(self):
+        """
+        Check
+        """
+        for idx in range(self.grid_height):
+            for idx2 in range(self.grid_width):
+                if self.grid[idx][idx2] == self.grid[idx][idx2+1] \
+                or self.grid[idx][idx2] == self.grid[idx+1][idx2]:
+                    return False
+        print("You lost")
+        return True
+    
+    
+    def is_full(self):
+        """
+        Check if grid is full
+        """
+        for idx in range(self.grid_width):
+            for idx2 in range(self.grid_height):
+                if self.grid[idx2][idx] == 0:
+                    return False
+        
+        return True
+    
+poc_2048_gui.run_gui(TwentyFortyEight(4, 4))
